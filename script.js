@@ -1,125 +1,201 @@
-const lengthSlider = document.getElementById("length");
 
+const passwordInput = document.getElementById("password");
+const lengthSlider = document.getElementById("length");
+const lengthValue = document.getElementById("lengthValue");
+const generateBtn = document.getElementById("generateBtn");
+const copyBtn = document.getElementById("copyBtn");
+const message = document.getElementById("message");
+
+const strengthText = document.getElementById("strengthText");
+const strengthFill = document.getElementById("strengthFill");
+const strengthBar = document.getElementById("strengthBar");
+
+// Character sets
+const characterSets = {
+    uppercase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    lowercase: "abcdefghijklmnopqrstuvwxyz",
+    numbers: "0123456789",
+    symbols: "!@#$%^&*()-_=+[]{}?"
+};
+
+// Update length display
 lengthSlider.addEventListener("input", () => {
-    document.getElementById("lengthValue").textContent =
-        lengthSlider.value;
+    lengthValue.textContent = lengthSlider.value;
 });
 
+// Cryptographically secure, unbiased random integer
+function secureRandomInt(max) {
+    if (!Number.isSafeInteger(max) || max < 1 ||
+        max > 4294967296) {
+        throw new Error("Invalid random range.");
+    }
 
-async function generatePassword() {
+    const range = 4294967296;
+    const limit = range - (range % max);
+    const values = new Uint32Array(1);
 
-    const message = document.getElementById("message");
+    do {
+        crypto.getRandomValues(values);
+    } while (values[0] >= limit);
 
-    const options = {
-        length: Number(lengthSlider.value),
-        uppercase: document.getElementById("uppercase").checked,
-        lowercase: document.getElementById("lowercase").checked,
-        numbers: document.getElementById("numbers").checked,
-        symbols: document.getElementById("symbols").checked
-    };
+    return values[0] % max;
+}
 
-    if (!Object.values(options).slice(1).some(Boolean)) {
-        message.style.color = "#f87171";
-        message.textContent = "Please select at least one option!";
+// Securely shuffle an array
+function secureShuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = secureRandomInt(i + 1);
+
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+
+    return array;
+}
+
+// Generate password
+function generatePassword() {
+
+    const length = Number(lengthSlider.value);
+
+    const selectedSets = [];
+
+    for (const [id, characters] of Object.entries(characterSets)) {
+
+        const checkbox = document.getElementById(id);
+
+        if (checkbox.checked) {
+            selectedSets.push(characters);
+        }
+    }
+
+    // Validate options
+    if (selectedSets.length === 0) {
+        showMessage("Select at least one character type!", true);
         return;
     }
 
-    message.style.color = "#a78bfa";
-    message.textContent = "Generating secure password...";
+    if (length < selectedSets.length) {
+        showMessage(
+            "Password length must cover every selected character type.",
+            true
+        );
+        return;
+    }
 
     try {
-        const response = await fetch("/generate", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(options)
-        });
+        let password = [];
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "Generation failed");
+        // Guarantee at least one character from every selected set
+        for (const set of selectedSets) {
+            password.push(set[secureRandomInt(set.length)]);
         }
 
-        document.getElementById("password").value = data.password;
+        // Combine selected character sets
+        const allCharacters = selectedSets.join("");
 
-        updateStrength(data.password);
+        // Fill remaining positions
+        while (password.length < length) {
+            const index = secureRandomInt(allCharacters.length);
 
-        message.style.color = "#4ade80";
-        message.textContent = "Password generated successfully!";
+            password.push(allCharacters[index]);
+        }
+
+        // Shuffle password
+        password = secureShuffle(password);
+
+        // Display password
+        const finalPassword = password.join("");
+
+        passwordInput.value = finalPassword;
+
+        updateStrength(finalPassword, allCharacters.length);
+
+        showMessage("Password generated successfully!");
+
+        copyBtn.textContent = "Copy";
 
     } catch (error) {
-        message.style.color = "#f87171";
-        message.textContent = error.message;
+        showMessage("Secure random generation is unavailable.", true);
     }
 }
 
+// Estimate strength using length and character pool.
+// This is an estimate, not a guarantee of security.
+function updateStrength(password, poolSize) {
 
+    const entropy = password.length * Math.log2(poolSize);
+
+    let strength;
+    let percentage;
+    let color;
+
+    if (entropy < 40) {
+        strength = "Weak";
+        percentage = 25;
+        color = "#f87171";
+    } else if (entropy < 60) {
+        strength = "Medium";
+        percentage = 50;
+        color = "#facc15";
+    } else if (entropy < 80) {
+        strength = "Strong";
+        percentage = 75;
+        color = "#60a5fa";
+    } else {
+        strength = "Very Strong";
+        percentage = 100;
+        color = "#4ade80";
+    }
+
+    strengthText.textContent = strength;
+
+    strengthFill.style.width = percentage + "%";
+    strengthFill.style.background = color;
+
+    strengthBar.setAttribute("aria-valuenow", percentage);
+}
+
+// Copy password
 async function copyPassword() {
 
-    const password = document.getElementById("password").value;
-    const message = document.getElementById("message");
+    const password = passwordInput.value;
 
     if (!password) {
-        message.textContent = "Generate a password first!";
+        showMessage("Generate a password first!", true);
         return;
     }
 
     try {
         await navigator.clipboard.writeText(password);
 
-        message.style.color = "#4ade80";
-        message.textContent = "Password copied successfully!";
-
-        document.getElementById("copyBtn").textContent = "Copied!";
+        copyBtn.textContent = "Copied!";
+        showMessage("Password copied successfully!");
 
         setTimeout(() => {
-            document.getElementById("copyBtn").textContent = "Copy";
-        }, 1500);
+            copyBtn.textContent = "Copy";
+        }, 1800);
 
-    } catch {
-        message.style.color = "#f87171";
-        message.textContent = "Clipboard access failed. Copy manually.";
+    } catch (error) {
+        showMessage(
+            "Clipboard unavailable. Please copy the password manually.",
+            true
+        );
     }
 }
 
+// Display messages
+function showMessage(text, isError = false) {
 
-function updateStrength(password) {
+    message.textContent = text;
 
-    let score = 0;
-
-    if (password.length >= 12) score++;
-    if (password.length >= 16) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-
-    let strength = "Weak";
-    let percentage = 25;
-
-    if (score >= 3) {
-        strength = "Medium";
-        percentage = 50;
-    }
-
-    if (score >= 5) {
-        strength = "Strong";
-        percentage = 75;
-    }
-
-    if (score === 6 && password.length >= 16) {
-        strength = "Very Strong";
-        percentage = 100;
-    }
-
-    document.getElementById("strengthText").textContent = strength;
-
-    document.getElementById("strengthFill").style.width =
-        percentage + "%";
+    message.style.color = isError
+        ? "#f87171"
+        : "#4ade80";
 }
 
+// Button events
+generateBtn.addEventListener("click", generatePassword);
+copyBtn.addEventListener("click", copyPassword);
 
-// Generate a password automatically when the page loads.
+// Generate initial password
 generatePassword();
