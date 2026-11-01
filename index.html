@@ -1,123 +1,157 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#090d1a">
 
-    <title>SecurePass | Password Generator</title>
+    <meta name="description"
+          content="Generate strong and secure passwords instantly with SecurePass.">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>SecurePass - Password Generator</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="container">
+    <main class="container">
 
-    <div class="header">
-        <div class="logo">🔐</div>
-        <h1>Secure<span>Pass</span></h1>
-        <p>Create strong and secure passwords instantly.</p>
-    </div>
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">🔐</div>
+            <h1>Secure<span>Pass</span></h1>
+            <p>Create strong and secure passwords instantly.</p>
+        </header>
 
-    <div class="generator-card">
+        <!-- Generator Card -->
+        <section class="generator-card">
 
-        <div class="card-heading">
-            <h2>Password Generator</h2>
-            <span class="secure-badge">● SECURE</span>
-        </div>
+            <div class="card-heading">
+                <h2>Password Generator</h2>
+                <span class="secure-badge">● SECURE</span>
+            </div>
 
-        <label class="section-label">Generated Password</label>
+            <!-- Password Output -->
+            <label class="section-label" for="password">
+                Generated Password
+            </label>
 
-        <div class="password-box">
-            <input type="text" id="password"
-                   placeholder="Your password appears here"
-                   readonly>
+            <div class="password-box">
+                <input
+                    type="text"
+                    id="password"
+                    placeholder="Your password appears here"
+                    readonly
+                    aria-label="Generated password"
+                >
 
-            <button id="copyBtn" onclick="copyPassword()">
-                Copy
+                <button id="copyBtn" class="copy-btn" type="button">
+                    Copy
+                </button>
+            </div>
+
+            <!-- Strength Meter -->
+            <div class="strength-section">
+
+                <div class="strength-info">
+                    <span>Password Strength</span>
+                    <span id="strengthText">Not generated</span>
+                </div>
+
+                <div
+                    class="strength-bar"
+                    role="progressbar"
+                    aria-label="Password strength"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
+                    id="strengthBar"
+                >
+                    <div id="strengthFill"></div>
+                </div>
+
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Password Length -->
+            <div class="length-header">
+                <label for="length">Password Length</label>
+                <span id="lengthValue">16</span>
+            </div>
+
+            <input
+                type="range"
+                id="length"
+                min="8"
+                max="64"
+                value="16"
+            >
+
+            <div class="range-labels">
+                <span>8 characters</span>
+                <span>64 characters</span>
+            </div>
+
+            <!-- Customization -->
+            <h3>Customize Your Password</h3>
+
+            <div class="options">
+
+                <label class="option">
+                    <span>
+                        <strong>Uppercase Letters</strong>
+                        <small>A - Z</small>
+                    </span>
+                    <input type="checkbox" id="uppercase" checked>
+                </label>
+
+                <label class="option">
+                    <span>
+                        <strong>Lowercase Letters</strong>
+                        <small>a - z</small>
+                    </span>
+                    <input type="checkbox" id="lowercase" checked>
+                </label>
+
+                <label class="option">
+                    <span>
+                        <strong>Numbers</strong>
+                        <small>0 - 9</small>
+                    </span>
+                    <input type="checkbox" id="numbers" checked>
+                </label>
+
+                <label class="option">
+                    <span>
+                        <strong>Symbols</strong>
+                        <small>! @ # $ % & *</small>
+                    </span>
+                    <input type="checkbox" id="symbols" checked>
+                </label>
+
+            </div>
+
+            <!-- Generate Button -->
+            <button id="generateBtn" class="generate-btn" type="button">
+                ✨ Generate Password
             </button>
-        </div>
 
-        <div class="strength-section">
-            <div class="strength-info">
-                <span>Password Strength</span>
-                <span id="strengthText">Not generated</span>
-            </div>
+            <p id="message" role="status" aria-live="polite"></p>
 
-            <div class="strength-bar">
-                <div id="strengthFill"></div>
-            </div>
-        </div>
+        </section>
 
-        <div class="divider"></div>
+        <!-- Footer -->
+        <footer>
+            <p>SecurePass © 2026 | Your security matters.</p>
+            <p>Passwords are generated securely in your browser.</p>
+        </footer>
 
-        <div class="length-header">
-            <label>Password Length</label>
-            <span id="lengthValue">16</span>
-        </div>
+    </main>
 
-        <input type="range" id="length"
-               min="8" max="64" value="16">
-
-        <div class="range-labels">
-            <span>8 characters</span>
-            <span>64 characters</span>
-        </div>
-
-        <h3>Customize Your Password</h3>
-
-        <div class="options">
-
-            <label class="option">
-                <span>
-                    <strong>Uppercase Letters</strong>
-                    <small>A - Z</small>
-                </span>
-                <input type="checkbox" id="uppercase" checked>
-            </label>
-
-            <label class="option">
-                <span>
-                    <strong>Lowercase Letters</strong>
-                    <small>a - z</small>
-                </span>
-                <input type="checkbox" id="lowercase" checked>
-            </label>
-
-            <label class="option">
-                <span>
-                    <strong>Numbers</strong>
-                    <small>0 - 9</small>
-                </span>
-                <input type="checkbox" id="numbers" checked>
-            </label>
-
-            <label class="option">
-                <span>
-                    <strong>Symbols</strong>
-                    <small>! @ # $ % & *</small>
-                </span>
-                <input type="checkbox" id="symbols" checked>
-            </label>
-
-        </div>
-
-        <button class="generate-btn" onclick="generatePassword()">
-            ✨ Generate Password
-        </button>
-
-        <p id="message"></p>
-
-    </div>
-
-    <footer>
-        <p>SecurePass © 2026 | Your security matters.</p>
-        <p>Passwords are generated locally by your Python backend.</p>
-    </footer>
-
-</div>
-
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="script.js"></script>
 
 </body>
 </html>
